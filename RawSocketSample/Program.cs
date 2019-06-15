@@ -18,7 +18,7 @@ namespace RawSocketSample
                 {
                     services.AddHostedService<SocketServer>();
                     services.AddHostedService<PacketCapture>();
-                    services.AddHostedService<LocalClient>();
+                    //services.AddHostedService<LocalClient>();
                 })
                 .Build();
 

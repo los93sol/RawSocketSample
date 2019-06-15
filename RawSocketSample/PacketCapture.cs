@@ -2,7 +2,9 @@
 using Microsoft.Extensions.Logging;
 using PacketDotNet;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,12 +23,19 @@ namespace RawSocketSample
             short protocol = 0x800; // IP
             _socket = new Socket(AddressFamily.Packet, SocketType.Raw, (System.Net.Sockets.ProtocolType)IPAddress.HostToNetworkOrder(protocol));
 
-            //if (args.Length > 0)
-            //{
-            //    var ifIndex = 0;
-            //    var address = new LLEndPoint(ifIndex);
-            //    _socket.Bind(address);
-            //}
+            foreach (var nic in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (nic.Name.ToLower() == "eth0")
+                {
+                    var indexProperty = nic.GetType().GetProperty(
+                        "Index", 
+                        BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+                    var index = (int)indexProperty.GetValue(nic);
+                    var address = new LLEndPoint(index);
+                    _socket.Bind(address);
+                }
+            }
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -39,8 +48,18 @@ namespace RawSocketSample
 
                 if (bytesRead > 0)
                 {
-                    var ethernetPacket = Packet.ParsePacket(LinkLayers.Ethernet, buffer);
-                    var ipPacket = (IPv4Packet)ethernetPacket.PayloadPacket;
+                    Packet ethernetPacket = null;
+                    IPv4Packet ipPacket = null;
+
+                    try
+                    {
+                        ethernetPacket = Packet.ParsePacket(LinkLayers.Ethernet, buffer);
+                        ipPacket = (IPv4Packet)ethernetPacket.PayloadPacket;
+                    }
+                    catch
+                    {
+
+                    }
 
                     if (ipPacket.Protocol == PacketDotNet.ProtocolType.Tcp)
                     {
