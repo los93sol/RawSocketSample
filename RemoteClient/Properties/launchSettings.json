@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "RemoteClient": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

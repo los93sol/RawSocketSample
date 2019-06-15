@@ -1,0 +1,61 @@
+﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using PacketDotNet;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RawSocketSample
+{
+    class PacketCapture : BackgroundService
+    {
+        private readonly ILogger _logger;
+        private readonly Socket _socket;
+
+        public PacketCapture(ILogger<PacketCapture> logger)
+        {
+            _logger = logger;
+
+            short protocol = 0x800; // IP
+            _socket = new Socket(AddressFamily.Packet, SocketType.Raw, (System.Net.Sockets.ProtocolType)IPAddress.HostToNetworkOrder(protocol));
+
+            //if (args.Length > 0)
+            //{
+            //    var ifIndex = 0;
+            //    var address = new LLEndPoint(ifIndex);
+            //    _socket.Bind(address);
+            //}
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            var buffer = new byte[150];
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                var bytesRead = await _socket.ReceiveAsync(buffer, SocketFlags.None);
+
+                if (bytesRead > 0)
+                {
+                    var ethernetPacket = Packet.ParsePacket(LinkLayers.Ethernet, buffer);
+                    var ipPacket = (IPv4Packet)ethernetPacket.PayloadPacket;
+
+                    if (ipPacket.Protocol == PacketDotNet.ProtocolType.Tcp)
+                    {
+                        var tcpPacket = (TcpPacket)ipPacket.PayloadPacket;
+
+                        if (tcpPacket.PayloadData.Length > 0 && (tcpPacket.SourcePort == 8087 || tcpPacket.DestinationPort == 8087))
+                        {
+                            var source = $"{ipPacket.SourceAddress}:{tcpPacket.SourcePort}";
+                            var destination = $"{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort}";
+
+                            _logger.LogInformation($"{source} - {destination} {Encoding.ASCII.GetString(tcpPacket.PayloadData)}");
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

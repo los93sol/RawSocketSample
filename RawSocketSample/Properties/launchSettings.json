@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "RawSocketSample": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+version: '3.4'
+
+services:
+  rawsocketsample:
+    image: ${DOCKER_REGISTRY-}rawsocketsample
+    container_name: rawsocketsample
+    build:
+      context: .
+      dockerfile: RawSocketSample/Dockerfile
+
+  remoteclient:
+    image: ${DOCKER_REGISTRY-}remoteclient
+
+    build:
+      context: .
+      dockerfile: RemoteClient/Dockerfile
