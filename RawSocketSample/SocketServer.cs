@@ -12,21 +12,22 @@ namespace RawSocketSample
     class SocketServer : BackgroundService
     {
         private readonly ILogger _logger;
+        private readonly Socket _listenSocket;
 
         public SocketServer(ILogger<SocketServer> logger)
         {
             _logger = logger;
+            _listenSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var listenSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            listenSocket.Bind(new IPEndPoint(IPAddress.Any, 8087));
-            listenSocket.Listen(120);
+            _listenSocket.Bind(new IPEndPoint(IPAddress.Any, 8087));
+            _listenSocket.Listen(120);
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                var socket = await listenSocket.AcceptAsync();
+                var socket = await _listenSocket.AcceptAsync();
                 _ = ChitChat(socket, stoppingToken);
             }
         }
@@ -43,7 +44,7 @@ namespace RawSocketSample
                 if (bytesRead > 0)
                 {
                     var received = Encoding.ASCII.GetString(receiveBuffer.AsSpan().Slice(0, bytesRead));
-                    _logger.LogInformation(received);
+                    _logger.LogTrace(received);
 
                     var sendBuffer = Encoding.ASCII.GetBytes("Hi local client, I'm the server");
 
