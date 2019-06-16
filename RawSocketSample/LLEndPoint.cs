@@ -27,14 +27,16 @@ namespace RawSocketSample
             }
             */
 
-            var a = new SocketAddress(AddressFamily.Packet, 20);
-            byte[] asBytes = BitConverter.GetBytes(_ifIndex);
-            a[4] = asBytes[0];
-            a[5] = asBytes[1];
-            a[6] = asBytes[2];
-            a[7] = asBytes[3];
+            var socketAddress = new SocketAddress(AddressFamily.Packet, 20);
+            var asBytes = BitConverter.GetBytes(_ifIndex);
+            socketAddress[3] = 3;   // ETH_P_ALL
+            socketAddress[4] = asBytes[0];
+            socketAddress[5] = asBytes[1];
+            socketAddress[6] = asBytes[2];
+            socketAddress[7] = asBytes[3];
+            socketAddress[10] = 4;  // PACKET_OUTGOING
 
-            return a;
+            return socketAddress;
         }
     }
 }
