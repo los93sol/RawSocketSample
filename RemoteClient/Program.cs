@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using ClientLibrary;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
@@ -16,7 +17,13 @@ namespace RemoteClient
                 })
                 .ConfigureServices(services =>
                 {
-                    services.AddHostedService<RemoteClient>();
+                    services.Configure<ClientOptions>(options =>
+                    {
+                        options.ServerHostname = "rawsocketsample";
+                        options.ServerPort = 8087;
+                        options.Message = "I'm the remote client";
+                    });
+                    services.AddHostedService<Client>();
                 })
                 .Build();
 
