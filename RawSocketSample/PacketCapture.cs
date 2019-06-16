@@ -4,7 +4,6 @@ using PacketDotNet;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,31 +15,22 @@ namespace RawSocketSample
         private readonly ILogger _logger;
         private readonly Socket _socket;
 
-        public PacketCapture(ILogger<PacketCapture> logger)
+        public PacketCapture(ILogger<PacketCapture> logger, NetworkInterface networkInterface, int interfaceIndex)
         {
             _logger = logger;
 
             short protocol = 0x800; // IP
             _socket = new Socket(AddressFamily.Packet, SocketType.Raw, (System.Net.Sockets.ProtocolType)IPAddress.HostToNetworkOrder(protocol));
 
-            foreach (var nic in NetworkInterface.GetAllNetworkInterfaces())
+            if (networkInterface.NetworkInterfaceType != NetworkInterfaceType.Loopback)
             {
-                if (nic.Name.ToLower() == "eth0")
-                {
-                    var indexProperty = nic.GetType().GetProperty(
-                        "Index", 
-                        BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-
-                    var index = (int)indexProperty.GetValue(nic);
-                    var address = new LLEndPoint(index);
-                    _socket.Bind(address);
-                }
+                _socket.Bind(new LLEndPoint(interfaceIndex));
             }
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var buffer = new byte[150];
+            var buffer = new byte[1500];
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -51,26 +41,23 @@ namespace RawSocketSample
                     Packet ethernetPacket = null;
                     IPv4Packet ipPacket = null;
 
-                    try
+                    ethernetPacket = Packet.ParsePacket(LinkLayers.Ethernet, buffer);
+
+                    if (ethernetPacket.PayloadPacket.GetType() == typeof(IPv4Packet))
                     {
-                        ethernetPacket = Packet.ParsePacket(LinkLayers.Ethernet, buffer);
                         ipPacket = (IPv4Packet)ethernetPacket.PayloadPacket;
-                    }
-                    catch
-                    {
 
-                    }
-
-                    if (ipPacket.Protocol == PacketDotNet.ProtocolType.Tcp)
-                    {
-                        var tcpPacket = (TcpPacket)ipPacket.PayloadPacket;
-
-                        if (tcpPacket.PayloadData.Length > 0 && (tcpPacket.SourcePort == 8087 || tcpPacket.DestinationPort == 8087))
+                        if (ipPacket.Protocol == PacketDotNet.ProtocolType.Tcp)
                         {
-                            var source = $"{ipPacket.SourceAddress}:{tcpPacket.SourcePort}";
-                            var destination = $"{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort}";
+                            var tcpPacket = (TcpPacket)ipPacket.PayloadPacket;
 
-                            _logger.LogInformation($"{source} - {destination} {Encoding.ASCII.GetString(tcpPacket.PayloadData)}");
+                            if (tcpPacket.PayloadData.Length > 0 && (tcpPacket.SourcePort == 8087 || tcpPacket.DestinationPort == 8087))
+                            {
+                                var source = $"{ipPacket.SourceAddress}:{tcpPacket.SourcePort}";
+                                var destination = $"{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort}";
+
+                                _logger.LogInformation($"{source} - {destination} {Encoding.ASCII.GetString(tcpPacket.PayloadData)}");
+                            }
                         }
                     }
                 }

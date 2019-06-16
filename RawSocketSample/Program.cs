@@ -17,7 +17,7 @@ namespace RawSocketSample
                 })
                 .ConfigureServices(services =>
                 {
-                    services.AddHostedService<PacketCapture>();
+                    services.AddHostedService<PacketCaptureManager>();
 
                     services.AddHostedService<SocketServer>();
                     services.Configure<ClientOptions>(options =>
