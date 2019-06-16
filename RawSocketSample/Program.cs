@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using ClientLibrary;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
@@ -16,9 +17,16 @@ namespace RawSocketSample
                 })
                 .ConfigureServices(services =>
                 {
-                    services.AddHostedService<SocketServer>();
                     services.AddHostedService<PacketCapture>();
-                    //services.AddHostedService<LocalClient>();
+
+                    services.AddHostedService<SocketServer>();
+                    services.Configure<ClientOptions>(options =>
+                    {
+                        options.ServerHostname = "localhost";
+                        options.ServerPort = 8087;
+                        options.Message = "I'm the local client";
+                    });
+                    services.AddHostedService<Client>();
                 })
                 .Build();
 
