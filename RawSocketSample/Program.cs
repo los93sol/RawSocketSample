@@ -27,6 +27,7 @@ namespace RawSocketSample
                         options.Message = "I'm the local client";
                     });
                     services.AddHostedService<Client>();
+                    services.AddHostedService<JunkClient>();
                 })
                 .Build();
 
