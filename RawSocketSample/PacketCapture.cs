@@ -55,6 +55,10 @@ namespace RawSocketSample
                                 _logger.LogInformation($"{source} - {destination}, Ack: {tcpPacket.AcknowledgmentNumber}, Seq: {tcpPacket.SequenceNumber} {Encoding.ASCII.GetString(tcpPacket.PayloadData)}");
                             }
                         }
+                        else
+                        {
+                            _logger.LogInformation($"Received {ipPacket.Protocol} packet, discarding...");
+                        }
                     }
                 }
             }
