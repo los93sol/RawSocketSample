@@ -21,11 +21,7 @@ namespace RawSocketSample
 
             short protocol = 0x800; // IP
             _socket = new Socket(AddressFamily.Packet, SocketType.Raw, (System.Net.Sockets.ProtocolType)IPAddress.HostToNetworkOrder(protocol));
-
-            if (networkInterface.NetworkInterfaceType != NetworkInterfaceType.Loopback)
-            {
-                _socket.Bind(new LLEndPoint(interfaceIndex));
-            }
+            _socket.Bind(new LLEndPoint(networkInterface, interfaceIndex));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -56,7 +52,7 @@ namespace RawSocketSample
                                 var source = $"{ipPacket.SourceAddress}:{tcpPacket.SourcePort}";
                                 var destination = $"{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort}";
 
-                                _logger.LogInformation($"{source} - {destination} {Encoding.ASCII.GetString(tcpPacket.PayloadData)}");
+                                _logger.LogInformation($"{source} - {destination}, Ack: {tcpPacket.AcknowledgmentNumber}, Seq: {tcpPacket.SequenceNumber} {Encoding.ASCII.GetString(tcpPacket.PayloadData)}");
                             }
                         }
                     }
