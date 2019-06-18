@@ -2,18 +2,17 @@
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Reflection;
 
 namespace RawSocketSample
 {
     class LLEndPoint : EndPoint
     {
         private readonly NetworkInterface _networkInterface;
-        private readonly int _ifIndex;
 
-        public LLEndPoint(NetworkInterface networkInterface, int interfaceIndex)
+        public LLEndPoint(NetworkInterface networkInterface)
         {
             _networkInterface = networkInterface;
-            _ifIndex = interfaceIndex;
         }
 
         public override SocketAddress Serialize()
@@ -31,7 +30,11 @@ namespace RawSocketSample
             */
 
             var socketAddress = new SocketAddress(AddressFamily.Packet, 20);
-            var asBytes = BitConverter.GetBytes(_ifIndex);
+
+            var indexProperty = _networkInterface.GetType().GetProperty("Index", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            var nicIndex = (int)indexProperty.GetValue(_networkInterface);
+            var asBytes = BitConverter.GetBytes(nicIndex);
+
             socketAddress[4] = asBytes[0];
             socketAddress[5] = asBytes[1];
             socketAddress[6] = asBytes[2];
@@ -40,7 +43,7 @@ namespace RawSocketSample
             if (_networkInterface.NetworkInterfaceType != NetworkInterfaceType.Loopback)
             {
                 socketAddress[3] = 3;   // ETH_P_ALL
-                socketAddress[10] = 4;  // PACKET_OUTGOING
+                //socketAddress[10] = 4;  // PACKET_OUTGOING
             }
 
             return socketAddress;
