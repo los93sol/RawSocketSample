@@ -30,7 +30,7 @@ namespace RawSocketSample
 
             if (version.Major > 3 || (version.Major == 3 && version.Minor >= 1))
             {
-                threads = 1;
+                threads = 2;
                 _logger.LogInformation($"Using packet fanout with {threads} per interface");
             }
 
