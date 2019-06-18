@@ -29,18 +29,20 @@ namespace RawSocketSample
         //    public IntPtr filter;
         //}
 
-        private const int SOL_SOCKET = 0xffff;
-        private const int PACKET_FANOUT = 16;
+        private const int SOL_SOCKET = 1;
+        private const int SOL_PACKET = 263;
+
+        private const int PACKET_FANOUT = 18;
         private const int PACKET_FANOUT_HASH = 0;
 
         public unsafe static int SetFanout(this Socket socket, int group)
         {
             var fanout = (group & 0xffff) | (PACKET_FANOUT_HASH << 16);
-            var result = setsockopt((int)socket.Handle, SOL_SOCKET, PACKET_FANOUT, &fanout, sizeof(int));
+            var result = setsockopt((int)socket.Handle, SOL_PACKET, PACKET_FANOUT, &fanout, sizeof(int));
 
             if (result != 0)
             {
-                var error = Marshal.GetLastWin32Error();
+                return Marshal.GetLastWin32Error();
             }
 
             return result;
@@ -69,7 +71,11 @@ namespace RawSocketSample
             short protocol = 0x0800; // IP
             _socket = new Socket(AddressFamily.Packet, SocketType.Raw, (System.Net.Sockets.ProtocolType)IPAddress.HostToNetworkOrder(protocol));
             _socket.Bind(new LLEndPoint(networkInterface));
-            _socket.SetFanout(_captureGroup);
+
+            if (_socket.SetFanout(_captureGroup) != 0)
+            {
+                _logger.LogError("Unable to set fanout");
+            }
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
