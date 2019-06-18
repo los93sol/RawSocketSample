@@ -17,18 +17,7 @@ namespace RawSocketSample
 
         public override SocketAddress Serialize()
         {
-            /*
-            // from linux/if_packet.h
-            struct sockaddr_ll {
-                Int16 family;
-                Int16 protocol;
-                Int32 ifindex;
-                Int32 pad1;
-                Int32 pad2;
-                Int32 pad3;
-            }
-            */
-
+            // Based on sockaddr_ll, check linux/if_packet.h for more information
             var socketAddress = new SocketAddress(AddressFamily.Packet, 20);
 
             var indexProperty = _networkInterface.GetType().GetProperty("Index", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -42,10 +31,11 @@ namespace RawSocketSample
 
             if (_networkInterface.NetworkInterfaceType != NetworkInterfaceType.Loopback)
             {
-                socketAddress[3] = 3;   // ETH_P_ALL
+                var eth_p_all = BitConverter.GetBytes(IPAddress.HostToNetworkOrder((short)3));   // ETH_P_ALL
+                socketAddress[2] = eth_p_all[0];
+                socketAddress[3] = eth_p_all[1];
                 //socketAddress[10] = 4;  // PACKET_OUTGOING
             }
-
             return socketAddress;
         }
     }
