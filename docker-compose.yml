@@ -7,6 +7,8 @@ services:
     build:
       context: .
       dockerfile: RawSocketSample/Dockerfile
+    cap_add:
+      - SYS_PTRACE
 
   remoteclient:
     image: ${DOCKER_REGISTRY-}remoteclient
