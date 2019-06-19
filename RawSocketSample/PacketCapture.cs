@@ -29,6 +29,11 @@ namespace RawSocketSample
             _socket = new Socket(AddressFamily.Packet, SocketType.Raw, (System.Net.Sockets.ProtocolType)IPAddress.HostToNetworkOrder(protocol));
             _socket.Bind(new LLEndPoint(networkInterface));
 
+            if (_socket.SetFilter() != 0)
+            {
+                _logger.LogError("Unable to set filter");
+            }
+
             if (_socket.SetFanout(_captureGroup) != 0)
             {
                 _logger.LogError("Unable to set fanout");
@@ -58,12 +63,19 @@ namespace RawSocketSample
                         {
                             var tcpPacket = (TcpPacket)ipPacket.PayloadPacket;
 
-                            if (tcpPacket.PayloadData.Length > 0 && (tcpPacket.SourcePort == 8087 || tcpPacket.DestinationPort == 8087))
-                            {
-                                var source = $"{ipPacket.SourceAddress}:{tcpPacket.SourcePort}";
-                                var destination = $"{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort}";
+                            var source = $"{ipPacket.SourceAddress}:{tcpPacket.SourcePort}";
+                            var destination = $"{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort}";
 
-                                _logger.LogInformation($"{_networkInterface.Name} Thread: {_thread} Group: {_captureGroup} Source: {source} Destination: {destination}, Ack: {tcpPacket.AcknowledgmentNumber}, Seq: {tcpPacket.SequenceNumber} {Encoding.ASCII.GetString(tcpPacket.PayloadData)}");
+                            if (tcpPacket.SourcePort == 8087 || tcpPacket.DestinationPort == 8087)
+                            {
+                                if (tcpPacket.PayloadData.Length > 0)
+                                {
+                                    _logger.LogInformation($"{_networkInterface.Name} Thread: {_thread} Group: {_captureGroup} Source: {source} Destination: {destination}, Ack: {tcpPacket.AcknowledgmentNumber}, Seq: {tcpPacket.SequenceNumber} {Encoding.ASCII.GetString(tcpPacket.PayloadData)}");
+                                }
+                            }
+                            else
+                            {
+                                _logger.LogInformation($"{_networkInterface.Name} Thread: {_thread} Group: {_captureGroup} Source: {source} Destination: {destination}, Received packet on wrong port");
                             }
                         }
                         else
