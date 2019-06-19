@@ -4,54 +4,12 @@ using PacketDotNet;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace RawSocketSample
 {
-    internal static class SocketExtensions
-    {
-        //[StructLayout(LayoutKind.Sequential)]
-        //public struct sock_filter
-        //{
-        //    public ushort code;
-        //    public byte jt;
-        //    public byte jf;
-        //    public int k;
-        //}
-
-        //[StructLayout(LayoutKind.Sequential)]
-        //public struct sock_fprog
-        //{
-        //    public ushort len;
-        //    public IntPtr filter;
-        //}
-
-        private const int SOL_SOCKET = 1;
-        private const int SOL_PACKET = 263;
-
-        private const int PACKET_FANOUT = 18;
-        private const int PACKET_FANOUT_HASH = 0;
-
-        public unsafe static int SetFanout(this Socket socket, int group)
-        {
-            var fanout = (group & 0xffff) | (PACKET_FANOUT_HASH << 16);
-            var result = setsockopt((int)socket.Handle, SOL_PACKET, PACKET_FANOUT, &fanout, sizeof(int));
-
-            if (result != 0)
-            {
-                return Marshal.GetLastWin32Error();
-            }
-
-            return result;
-        }
-
-        [DllImport("libc", SetLastError = true)]
-        static unsafe extern int setsockopt(int sockfd, int level, int optname, void* optval, int optlen);
-    }
-
     class PacketCapture : BackgroundService
     {
         private readonly ILogger _logger;
@@ -67,7 +25,6 @@ namespace RawSocketSample
             _captureGroup = captureGroup;
             _thread = thread;
 
-            //short protocol = 0x0003;    // ETH_P_ALL
             short protocol = 0x0800; // IP
             _socket = new Socket(AddressFamily.Packet, SocketType.Raw, (System.Net.Sockets.ProtocolType)IPAddress.HostToNetworkOrder(protocol));
             _socket.Bind(new LLEndPoint(networkInterface));
