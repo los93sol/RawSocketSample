@@ -39,7 +39,7 @@ namespace ClientLibrary
             while (!stoppingToken.IsCancellationRequested)
             {
                 await _socket.SendToAsync(new ArraySegment<byte>(sendBuffer, 0, sendBuffer.Length), SocketFlags.None, remoteEndpoint);
-                await Task.Delay(TimeSpan.FromSeconds(5));
+                await Task.Delay(_clientOptions.Delay);
             }
         }
 
