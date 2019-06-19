@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Threading.Tasks;
 
 namespace RemoteClient
@@ -22,6 +23,7 @@ namespace RemoteClient
                         options.ServerHostname = "rawsocketsample";
                         options.ServerPort = 8087;
                         options.Message = "I'm the remote client";
+                        options.Delay = TimeSpan.FromSeconds(3);
                     });
                     services.AddHostedService<Client>();
                 })
