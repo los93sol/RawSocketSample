@@ -66,7 +66,7 @@ namespace ClientLibrary
                     break;
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(5));
+                await Task.Delay(_clientOptions.Delay);
             }
         }
 
