@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using ClientLibrary;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -12,17 +14,19 @@ namespace RawSocketSample
     class SocketServer : BackgroundService
     {
         private readonly ILogger _logger;
+        private readonly ClientOptions _clientOptions;
         private readonly Socket _listenSocket;
 
-        public SocketServer(ILogger<SocketServer> logger)
+        public SocketServer(ILogger<SocketServer> logger, IOptionsMonitor<ClientOptions> clientOptions)
         {
             _logger = logger;
+            _clientOptions = clientOptions.CurrentValue;
             _listenSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _listenSocket.Bind(new IPEndPoint(IPAddress.Any, 8087));
+            _listenSocket.Bind(new IPEndPoint(IPAddress.Any, _clientOptions.ServerPort));
             _listenSocket.Listen(120);
 
             while (!stoppingToken.IsCancellationRequested)
