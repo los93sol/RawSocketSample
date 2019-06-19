@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Threading.Tasks;
 
 namespace RawSocketSample
@@ -25,9 +26,10 @@ namespace RawSocketSample
                         options.ServerHostname = "localhost";
                         options.ServerPort = 8087;
                         options.Message = "I'm the local client";
+                        options.Delay = TimeSpan.FromSeconds(3);
                     });
                     services.AddHostedService<ClientManager>();
-                    //services.AddHostedService<JunkClient>();
+                    services.AddHostedService<JunkClient>();
                 })
                 .Build();
 
