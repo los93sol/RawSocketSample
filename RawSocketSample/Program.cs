@@ -26,7 +26,7 @@ namespace RawSocketSample
                         options.ServerHostname = "localhost";
                         options.ServerPort = 8087;
                         options.Message = "I'm the local client";
-                        options.Delay = TimeSpan.FromSeconds(3);
+                        options.Delay = TimeSpan.FromSeconds(1);
                     });
                     services.AddHostedService<ClientManager>();
                     services.AddHostedService<JunkClient>();
