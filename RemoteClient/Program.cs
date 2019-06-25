@@ -23,9 +23,9 @@ namespace RemoteClient
                         options.ServerHostname = "rawsocketsample";
                         options.ServerPort = 8087;
                         options.Message = "I'm the remote client";
-                        options.Delay = TimeSpan.FromSeconds(3);
+                        options.Delay = TimeSpan.FromSeconds(1);
                     });
-                    services.AddHostedService<Client>();
+                    services.AddHostedService<ClientManager>();
                 })
                 .Build();
 
