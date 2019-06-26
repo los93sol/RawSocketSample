@@ -34,6 +34,14 @@ namespace RawSocketSample
         private const int PACKET_FANOUT = 18;
         private const int PACKET_FANOUT_HASH = 0;
 
+        private const int PACKET_VERSION = 10;
+        
+        public enum PacketVersions
+        {
+            TPACKET_V2 = 1,
+            TPACKET_V3 = 2
+        }
+
         public unsafe static int SetFilter(this Socket socket)
         {
             // Hardcoded for now until I can figure out how we can have some sort of API surface to generate the pseudo asm on demand
@@ -80,6 +88,13 @@ namespace RawSocketSample
         {
             var fanout = (group & 0xffff) | (PACKET_FANOUT_HASH << 16);
             var result = setsockopt((int)socket.Handle, SOL_PACKET, PACKET_FANOUT, &fanout, sizeof(int));
+            return ValidateResult(result);
+        }
+
+        public unsafe static int SetPacketVersion(this Socket socket, PacketVersions version)
+        {
+            var v = (int)version;
+            var result = setsockopt((int)socket.Handle, SOL_PACKET, PACKET_VERSION, &v, sizeof(int));
             return ValidateResult(result);
         }
 

@@ -29,6 +29,11 @@ namespace RawSocketSample
             _socket = new Socket(AddressFamily.Packet, SocketType.Raw, (System.Net.Sockets.ProtocolType)IPAddress.HostToNetworkOrder(protocol));
             _socket.Bind(new LLEndPoint(networkInterface));
 
+            if (_socket.SetPacketVersion(SocketExtensions.PacketVersions.TPACKET_V3) != 0)
+            {
+                _logger.LogError("Unable to set packet version");
+            }
+
             if (_socket.SetFilter() != 0)
             {
                 _logger.LogError("Unable to set filter");
