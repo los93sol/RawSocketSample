@@ -3,24 +3,60 @@ using System.Runtime.InteropServices;
 
 namespace RawSocketSample
 {
-    [StructLayout(LayoutKind.Sequential)]
-    public struct sock_filter
-    {
-        public ushort code;
-        public byte jt;
-        public byte jf;
-        public int k;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct sock_fprog
-    {
-        public ushort len;
-        public unsafe sock_filter* filter;
-    }
 
     internal static class SocketExtensions
     {
+        [StructLayout(LayoutKind.Sequential)]
+        public struct sock_filter
+        {
+            public ushort code;
+            public byte jt;
+            public byte jf;
+            public int k;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct sock_fprog
+        {
+            public ushort len;
+            public unsafe sock_filter* filter;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct tpacket_req3
+        {
+            /// <summary>
+            /// Minimal size of contiguous block
+            /// </summary>
+            public uint tp_block_size;
+
+            /// <summary>
+            /// Number of blocks
+            /// </summary>
+            public uint tp_block_nr;
+
+            /// <summary>
+            /// Size of frame
+            /// </summary>
+            public uint tp_frame_size;
+
+            /// <summary>
+            /// Total number of frames
+            /// </summary>
+            public uint tp_frame_nr;
+
+            /// <summary>
+            /// timeout in msecs
+            /// </summary>
+            public uint tp_retire_blk_tov;
+
+            /// <summary>
+            /// offset to private data area
+            /// </summary>
+            public uint tp_sizeof_priv;
+            public uint tp_feature_req_word;
+        }
+
         private static class SocketOptionLevels
         {
             public const int SOL_SOCKET = 1;
@@ -38,17 +74,17 @@ namespace RawSocketSample
             public const int PACKET_FANOUT = 18;
 
             public const int PACKET_VERSION = 10;
+
+            public const int PACKET_RX_RING = 5;
         }
 
         public const int PACKET_FANOUT_HASH = 0;
-        
+
         public enum PacketVersions
         {
             TPACKET_V2 = 1,
             TPACKET_V3 = 2
         }
-
-        public const int PACKET_RX_RING = 5;
 
         public unsafe static int SetFilter(this Socket socket)
         {
@@ -106,14 +142,11 @@ namespace RawSocketSample
             return ValidateResult(result);
         }
 
-        //struct tpacket_req3 tp3;
-        //memset(&tp3, 0, sizeof(tp3));
-        //tp3.tp_block_size = block_size;
-        //tp3.tp_frame_size = block_size;
-        //tp3.tp_block_nr = block_nr;
-        //tp3.tp_frame_nr = block_nr;
-        //tp3.tp_retire_blk_tov = block_ms;  // timeout, ms
-        //r = setsockopt(*fd, SOL_PACKET, PACKET_RX_RING, &tp3, sizeof(tp3));
+        public unsafe static int SetRxRing(this Socket socket, tpacket_req3 request)
+        {
+            var result = setsockopt((int)socket.Handle, SocketOptionLevels.SOL_PACKET, SocketOptions.PACKET_RX_RING, &request, sizeof(tpacket_req3));
+            return ValidateResult(result);
+        }
 
         private static int ValidateResult(int result)
         {

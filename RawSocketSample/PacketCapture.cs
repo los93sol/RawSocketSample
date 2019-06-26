@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PacketDotNet;
+using System;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -17,6 +18,7 @@ namespace RawSocketSample
         private readonly int _captureGroup;
         private readonly int _thread;
         private readonly Socket _socket;
+        private readonly IntPtr? _ring;
 
         public PacketCapture(ILogger<PacketCapture> logger, NetworkInterface networkInterface, int captureGroup, int thread)
         {
@@ -39,6 +41,34 @@ namespace RawSocketSample
                 _logger.LogError("Unable to set filter");
             }
 
+            var tp3 = new SocketExtensions.tpacket_req3
+            {
+                tp_block_size = 4096,
+                tp_frame_size = 2048,
+                tp_block_nr = 4,
+                tp_frame_nr = 8
+            };
+
+            //if (_socket.SetRxRing(tp3) != 0)
+            //{
+            //    _logger.LogError("Unable to set RX ring");
+            //}
+            //else
+            //{
+            //    _ring = MMap.Create(
+            //        IntPtr.Zero,
+            //        tp3.tp_block_size * tp3.tp_block_nr,//4096,//4096 * 4,
+            //        MMap.MemoryMappedProtections.PROT_READ | MMap.MemoryMappedProtections.PROT_WRITE,
+            //        MMap.MemoryMappedFlags.MAP_SHARED | MMap.MemoryMappedFlags.MAP_LOCKED | MMap.MemoryMappedFlags.MAP_NORESERVE,
+            //        _socket.Handle,
+            //        0);
+
+            //    if (!_ring.HasValue)
+            //    {
+            //        _logger.LogError("Unable to mmap RX ring");
+            //    }
+            //}
+
             if (_socket.SetFanout(_captureGroup) != 0)
             {
                 _logger.LogError("Unable to set fanout");
@@ -51,6 +81,11 @@ namespace RawSocketSample
 
             while (!stoppingToken.IsCancellationRequested)
             {
+                if (_ring.HasValue)
+                {
+                    // TODO: Poll the ring for data
+                }
+
                 var bytesRead = await _socket.ReceiveAsync(buffer, SocketFlags.None);
 
                 if (bytesRead > 0)
