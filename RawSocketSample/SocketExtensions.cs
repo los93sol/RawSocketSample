@@ -21,26 +21,34 @@ namespace RawSocketSample
 
     internal static class SocketExtensions
     {
-        private const int SOL_SOCKET = 1;
+        private static class SocketOptionLevels
+        {
+            public const int SOL_SOCKET = 1;
+            public const int SOL_PACKET = 263;
+        }
 
-        // SOL_SOCKET Options
-        private const int SO_ATTACH_FILTER = 26;
-        //private const int SO_DETACH_FILTER = 27;
-        //private const int SO_LOCK_FILTER = 44;
+        private static class SocketOptions
+        {
+            // SOL_SOCKET Options
+            public const int SO_ATTACH_FILTER = 26;
+            //public const int SO_DETACH_FILTER = 27;
+            //public const int SO_LOCK_FILTER = 44;
 
-        private const int SOL_PACKET = 263;
+            // SOL_PACKET Options
+            public const int PACKET_FANOUT = 18;
 
-        // SOL_PACKET Options
-        private const int PACKET_FANOUT = 18;
-        private const int PACKET_FANOUT_HASH = 0;
+            public const int PACKET_VERSION = 10;
+        }
 
-        private const int PACKET_VERSION = 10;
+        public const int PACKET_FANOUT_HASH = 0;
         
         public enum PacketVersions
         {
             TPACKET_V2 = 1,
             TPACKET_V3 = 2
         }
+
+        public const int PACKET_RX_RING = 5;
 
         public unsafe static int SetFilter(this Socket socket)
         {
@@ -80,23 +88,32 @@ namespace RawSocketSample
 
             var length = Marshal.SizeOf(bpf);
 
-            var result = setsockopt((int)socket.Handle, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, length);
+            var result = setsockopt((int)socket.Handle, SocketOptionLevels.SOL_SOCKET, SocketOptions.SO_ATTACH_FILTER, &bpf, length);
             return ValidateResult(result);
         }
 
         public unsafe static int SetFanout(this Socket socket, int group)
         {
             var fanout = (group & 0xffff) | (PACKET_FANOUT_HASH << 16);
-            var result = setsockopt((int)socket.Handle, SOL_PACKET, PACKET_FANOUT, &fanout, sizeof(int));
+            var result = setsockopt((int)socket.Handle, SocketOptionLevels.SOL_PACKET, SocketOptions.PACKET_FANOUT, &fanout, sizeof(int));
             return ValidateResult(result);
         }
 
         public unsafe static int SetPacketVersion(this Socket socket, PacketVersions version)
         {
             var v = (int)version;
-            var result = setsockopt((int)socket.Handle, SOL_PACKET, PACKET_VERSION, &v, sizeof(int));
+            var result = setsockopt((int)socket.Handle, SocketOptionLevels.SOL_PACKET, SocketOptions.PACKET_VERSION, &v, sizeof(int));
             return ValidateResult(result);
         }
+
+        //struct tpacket_req3 tp3;
+        //memset(&tp3, 0, sizeof(tp3));
+        //tp3.tp_block_size = block_size;
+        //tp3.tp_frame_size = block_size;
+        //tp3.tp_block_nr = block_nr;
+        //tp3.tp_frame_nr = block_nr;
+        //tp3.tp_retire_blk_tov = block_ms;  // timeout, ms
+        //r = setsockopt(*fd, SOL_PACKET, PACKET_RX_RING, &tp3, sizeof(tp3));
 
         private static int ValidateResult(int result)
         {
@@ -109,6 +126,6 @@ namespace RawSocketSample
         }
 
         [DllImport("libc", SetLastError = true)]
-        static unsafe extern int setsockopt(int sockfd, int level, int optname, void* optval, int optlen);
+        private static unsafe extern int setsockopt(int sockfd, int level, int optname, void* optval, int optlen);
     }
 }
