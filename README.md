@@ -8,7 +8,8 @@ What's working now?
 5. Inbound/Outbound capture on local interface
 6. Inbound/Outbound capture on network interface
 7. Packet fanout, specifically hash mode for capturing across multiple threads
+8. BPF Filtering (hardcoded pseudo asm, but proves the concept)
 
 What's in the works?
-1. Set BPF filter
+1. Generate BPF pseudo asm
 2. Experiment with using MMAP and bypassing .NET's ReceiveAsync.  The idea is that the kernel can just shove the packets straight into our userspace without it having to do it's copy before we get it.
