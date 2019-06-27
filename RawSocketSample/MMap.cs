@@ -1,8 +1,40 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace RawSocketSample
 {
+    internal class Ring
+    {
+        public IntPtr BufferAddress { get; private set; }
+        public List<Block> Blocks { get; private set; } = new List<Block>();
+        public SocketExtensions.tpacket_req3 TPacketReq3 { get; private set; }
+
+        public Ring(IntPtr bufferAddress, SocketExtensions.tpacket_req3 tpacket_req3)
+        {
+            BufferAddress = bufferAddress;
+
+            for (var i = 0; i < tpacket_req3.tp_block_nr; i++)
+            {
+                Blocks.Add(new Block(bufferAddress, i, tpacket_req3.tp_block_size));
+            }
+
+            TPacketReq3 = tpacket_req3;
+        }
+    }
+
+    internal class Block
+    {
+        public IntPtr Offset { get; private set; }
+        public uint Length { get; private set; }
+
+        public Block(IntPtr bufferAddress, int blockNumber, uint blockSize)
+        {
+            Offset = new IntPtr((long)bufferAddress + (blockNumber * blockSize));
+            Length = blockSize;
+        }
+    }
+
     internal static class MMap
     {
         [Flags]
