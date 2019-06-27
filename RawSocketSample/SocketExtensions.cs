@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using System;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 
 namespace RawSocketSample
@@ -55,6 +56,73 @@ namespace RawSocketSample
             /// </summary>
             public uint tp_sizeof_priv;
             public uint tp_feature_req_word;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct block_desc_test
+        {
+            public uint version;
+            public uint offset_to_priv;
+            public unsafe byte* h1;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct block_desc
+        {
+            public uint version;
+            public uint offset_to_priv;
+            //IntPtr tpacket_hdr_v1;
+            public tpacket_hdr_v1 h1;
+        };
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct tpacket_hdr_v1
+        {
+            public int block_status;
+            public int num_pkts;
+            public int offset_to_first_pkt;
+            public int blk_len;
+            public ulong seq_num;
+            public IntPtr ts_last_pkt;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct tpacket3_hdr
+        {
+            public uint tp_next_offset;
+            public uint tp_sec;
+            public uint tp_nsec;
+            public uint tp_snaplen;
+            public uint tp_len;
+            public uint tp_status;
+            public ushort tp_mac;
+            public ushort tp_net;
+            public IntPtr hv1;
+//union {
+//   struct tpacket_hdr_variant1   hv1
+//        };
+    }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct pollfd
+        {
+            public IntPtr fd;
+            public short events;
+            public short revents;
+        }
+
+        [Flags]
+        public enum PollEvents: short
+        {
+            /// <summary>
+            /// There is data to read
+            /// </summary>
+            POLLIN = 0x0001,
+
+            /// <summary>
+            /// There is urgent data to read
+            /// </summary>
+            POLLPRI = 0x0002
         }
 
         private static class SocketOptionLevels
@@ -148,6 +216,16 @@ namespace RawSocketSample
             return ValidateResult(result);
         }
 
+        public static int Poll(this Socket socket, IntPtr ringFd, int timeoutMs)
+        {
+            var pollFds = new pollfd[1];
+            pollFds[0].fd = ringFd;
+            pollFds[0].events = (short)(PollEvents.POLLIN | PollEvents.POLLPRI);
+
+            var result = poll(pollFds, (uint)pollFds.Length, timeoutMs);
+            return result;
+        }
+
         private static int ValidateResult(int result)
         {
             if (result != 0)
@@ -160,5 +238,8 @@ namespace RawSocketSample
 
         [DllImport("libc", SetLastError = true)]
         private static unsafe extern int setsockopt(int sockfd, int level, int optname, void* optval, int optlen);
+
+        [DllImport("libc", SetLastError = true)]
+        private static extern int poll([In, Out]pollfd[] fds, uint fdsCount, int timeout);
     }
 }
