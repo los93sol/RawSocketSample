@@ -27,7 +27,7 @@ namespace RawSocketSample
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _listenSocket.Bind(new IPEndPoint(IPAddress.Any, _clientOptions.ServerPort));
-            _listenSocket.Listen(120);
+            _listenSocket.Listen(1000);
 
             while (!stoppingToken.IsCancellationRequested)
             {
