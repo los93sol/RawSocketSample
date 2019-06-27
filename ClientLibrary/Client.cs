@@ -48,11 +48,12 @@ namespace ClientLibrary
                 }
             }
 
-            var sendBuffer = Encoding.ASCII.GetBytes(_clientOptions.Message);
+            //var sendBuffer = Encoding.ASCII.GetBytes(_clientOptions.Message);
             var receiveBuffer = new byte[75];
 
             while (!stoppingToken.IsCancellationRequested)
             {
+                var sendBuffer = Encoding.ASCII.GetBytes($"{DateTime.Now} - {_clientOptions.Message}");
                 await _socket.SendAsync(new ArraySegment<byte>(sendBuffer, 0, sendBuffer.Length), SocketFlags.None);
 
                 var bytesRead = await _socket.ReceiveAsync(receiveBuffer, SocketFlags.None, stoppingToken);
